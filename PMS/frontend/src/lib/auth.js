@@ -10,6 +10,8 @@ export const setAuth = (token, role) => {
 export const clearAuth = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('role');
+  localStorage.removeItem('student_resume_path');
+  localStorage.removeItem('student_resume_name');
 };
 
 export const isStudent = () => {

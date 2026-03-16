@@ -26,10 +26,17 @@ export const apiRequest = async (url, options = {}) => {
   if (!response.ok) {
     let message = 'Request failed';
     try {
-      const payload = await response.json();
-      message = payload.error || payload.message || message;
+      const raw = await response.text();
+      if (raw) {
+        try {
+          const payload = JSON.parse(raw);
+          message = payload.error || payload.message || message;
+        } catch {
+          message = raw;
+        }
+      }
     } catch {
-      message = await response.text() || message;
+      // Ignore body parsing errors and keep the default message.
     }
     throw new Error(message);
   }
@@ -210,6 +217,35 @@ export const api = {
     apiRequest('/api/admin/analytics', {
       headers: buildHeaders({}, true),
     }),
+
+  downloadStudentDocumentAsAdmin: async (studentId, type = 'resume') => {
+    const response = await fetch(withBaseUrl(`/api/admin/students/${studentId}/documents/${type}`), {
+      headers: buildHeaders({}, true),
+    });
+    if (!response.ok) {
+      let message = 'Unable to download document';
+      try {
+        const raw = await response.text();
+        if (raw) {
+          message = raw;
+        }
+      } catch {
+        // Keep fallback message.
+      }
+      throw new Error(message);
+    }
+    const blob = await response.blob();
+    const contentType = response.headers.get('content-type') || 'application/octet-stream';
+    const disposition = response.headers.get('content-disposition') || '';
+    const fileNameMatch = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+    const encodedName = fileNameMatch?.[1];
+    const directName = fileNameMatch?.[2];
+    const fileName = encodedName
+      ? decodeURIComponent(encodedName)
+      : (directName || `${type}`);
+
+    return { blob, fileName, contentType };
+  },
 
   downloadAnalyticsReport: async () => {
     const response = await fetch(withBaseUrl('/api/admin/reports/analytics/pdf'), {

@@ -8,6 +8,19 @@ export default function StudentOffersPage() {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const getOfferCtcDisplay = (offer) => {
+    const ctc = offer.offeredCtc
+      ?? offer.offeredCTC
+      ?? offer.offered_ctc
+      ?? offer.application?.job?.salary;
+
+    if (ctc === null || ctc === undefined || Number.isNaN(Number(ctc))) {
+      return 'N/A';
+    }
+
+    return Number(ctc).toLocaleString('en-IN');
+  };
+
   const loadOffers = async () => {
     try {
       setLoading(true);
@@ -72,7 +85,7 @@ export default function StudentOffersPage() {
               {offers.map((offer) => (
                 <tr key={offer.offerId}>
                   <td>{offer.application?.job?.title || 'N/A'}</td>
-                  <td>{offer.offeredCtc || 'N/A'}</td>
+                  <td>{getOfferCtcDisplay(offer)}</td>
                   <td>{offer.offeredDate || 'N/A'}</td>
                   <td>{offer.status || 'N/A'}</td>
                   <td>{offer.remarks || '-'}</td>
